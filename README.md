@@ -31,6 +31,65 @@ Additional technical details can be found on Everipedia (https://everipedia.org/
 
 Forked from Bitcoin reference wallet 0.8.5 and Blakecoin
 
+Building on macOS Apple Silicon (ARM64)
+--------------------------------------
+
+This version has been updated to compile on modern macOS with Apple Silicon (M1/M2/M3/M4) using Homebrew dependencies.
+
+### Prerequisites
+
+Install dependencies via Homebrew:
+
+```bash
+brew install boost openssl@3 berkeley-db@4 miniupnpc qt@5
+```
+
+### Build the Daemon (maxcoind)
+
+Use the included compile script:
+
+```bash
+chmod +x maxcoin-wallet-compile.command
+./maxcoin-wallet-compile.command
+```
+
+Or build manually:
+
+```bash
+cd src
+make -f makefile.osx USE_UPNP=-
+```
+
+The daemon binary will be created at `src/maxcoind`.
+
+### Build the Qt Wallet (MaxCoin-Qt.app)
+
+Use the included compile script:
+
+```bash
+chmod +x maxcoin-qt-wallet-compile.command
+./maxcoin-qt-wallet-compile.command
+```
+
+Or build manually:
+
+```bash
+/opt/homebrew/opt/qt@5/bin/qmake "USE_UPNP=-" maxcoin-qt.pro
+make -j$(sysctl -n hw.ncpu)
+```
+
+The wallet app will be created at `MaxCoin-Qt.app`.
+
+### Key Fixes for Modern macOS
+
+The following updates were made for compatibility with modern toolchains:
+
++ **OpenSSL 3.x**: Updated crypto code for opaque BIGNUM/BN_CTX and EVP API changes
++ **Boost 1.69+**: Changed `io_service` to `io_context`, `is_complete()` to `is_absolute()`, updated copy_file options, removed boost_system from linker (now header-only)
++ **C++14**: Required for modern Crypto++ compatibility
++ **Apple Silicon paths**: Updated Homebrew paths from `/usr/local/opt/` to `/opt/homebrew/opt/`
++ **Qt5**: Updated .pro file for Qt5 on ARM64
+
 License
 ------
 

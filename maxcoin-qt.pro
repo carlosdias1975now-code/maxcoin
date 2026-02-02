@@ -43,10 +43,11 @@ QMAKE_CXXFLAGS += -Wno-reserved-user-defined-literal
 #BOOST_LIB_SUFFIX=-mt
 #BOOST_INCLUDE_PATH=/usr/local/opt/boost@1.60/include
 #BOOST_LIB_PATH=/usr/local/opt/boost@1.60/lib
-OPENSSL_INCLUDE_PATH=/usr/local/opt/openssl/include
-OPENSSL_LIB_PATH=/usr/local/opt/openssl/lib
-MINIUPNPC_INCLUDE_PATH=/usr/local/opt/miniupnpc/include
-MINIUPNPC_LIB_PATH=/usr/local/opt/miniupnpc/lib
+# Apple Silicon Homebrew paths
+OPENSSL_INCLUDE_PATH=/opt/homebrew/opt/openssl@3/include
+OPENSSL_LIB_PATH=/opt/homebrew/opt/openssl@3/lib
+MINIUPNPC_INCLUDE_PATH=/opt/homebrew/opt/miniupnpc/include
+MINIUPNPC_LIB_PATH=/opt/homebrew/opt/miniupnpc/lib
 
 OBJECTS_DIR = build
 MOC_DIR = build
@@ -131,7 +132,7 @@ contains(BITCOIN_NEED_QT_PLUGINS, 1) {
 # CryptoPP
 LIBS += $$PWD/src/cryptopp/libcryptopp.a
 !win32 {
-    gencryptopp.commands = cd $$PWD/src/cryptopp && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\" static
+    gencryptopp.commands = cd \"$$PWD/src/cryptopp\" && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\" static
 } else {
     # make an educated guess about what the ranlib command is called
     isEmpty(QMAKE_RANLIB) {
@@ -151,7 +152,7 @@ INCLUDEPATH += src/leveldb/include src/leveldb/helpers
 LIBS += $$PWD/src/leveldb/libleveldb.a $$PWD/src/leveldb/libmemenv.a
 !win32 {
     # we use QMAKE_CXXFLAGS_RELEASE even without RELEASE=1 because we use RELEASE to indicate linking preferences not -O preferences
-    genleveldb.commands = cd $$PWD/src/leveldb && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\" libleveldb.a libmemenv.a
+    genleveldb.commands = cd \"$$PWD/src/leveldb\" && CC=$$QMAKE_CC CXX=$$QMAKE_CXX $(MAKE) OPT=\"$$QMAKE_CXXFLAGS $$QMAKE_CXXFLAGS_RELEASE\" libleveldb.a libmemenv.a
 } else {
     # make an educated guess about what the ranlib command is called
     isEmpty(QMAKE_RANLIB) {
@@ -170,13 +171,16 @@ QMAKE_CLEAN += $$PWD/src/leveldb/libleveldb.a; cd $$PWD/src/leveldb ; $(MAKE) cl
 # regenerate src/build.h
 !win32|contains(USE_BUILD_INFO, 1) {
     genbuild.depends = FORCE
-    genbuild.commands = cd $$PWD; /bin/sh share/genbuild.sh $$OUT_PWD/build/build.h
+    genbuild.commands = cd \"$$PWD\" && /bin/sh share/genbuild.sh \"$$OUT_PWD/build/build.h\"
     genbuild.target = $$OUT_PWD/build/build.h
     PRE_TARGETDEPS += $$OUT_PWD/build/build.h
     QMAKE_EXTRA_TARGETS += genbuild
     DEFINES += HAVE_BUILD_INFO
 }
 
+# C++14 required for Crypto++ and modern compiler compatibility
+CONFIG += c++14
+QMAKE_CXXFLAGS += -std=c++14 -Wno-deprecated-declarations
 QMAKE_CXXFLAGS_WARN_ON = -fdiagnostics-show-option -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wstack-protector
 
 # Input
@@ -400,7 +404,8 @@ OTHER_FILES += README.md \
 
 # platform specific defaults, if not overridden on command line
 isEmpty(BOOST_LIB_SUFFIX) {
-    macx:BOOST_LIB_SUFFIX = -mt
+    # Modern Homebrew Boost doesn't use -mt suffix
+    macx:BOOST_LIB_SUFFIX =
     win32:BOOST_LIB_SUFFIX = -mgw44-mt-s-1_50
 }
 
@@ -409,23 +414,23 @@ isEmpty(BOOST_THREAD_LIB_SUFFIX) {
 }
 
 isEmpty(BDB_LIB_PATH) {
-    macx:BDB_LIB_PATH = /opt/local/lib/db48
+    macx:BDB_LIB_PATH = /opt/homebrew/opt/berkeley-db@4/lib
 }
 
 isEmpty(BDB_LIB_SUFFIX) {
-    macx:BDB_LIB_SUFFIX = -4.8
+    macx:BDB_LIB_SUFFIX =
 }
 
 isEmpty(BDB_INCLUDE_PATH) {
-    macx:BDB_INCLUDE_PATH = /opt/local/include/db48
+    macx:BDB_INCLUDE_PATH = /opt/homebrew/opt/berkeley-db@4/include
 }
 
 isEmpty(BOOST_LIB_PATH) {
-    macx:BOOST_LIB_PATH = /opt/local/lib
+    macx:BOOST_LIB_PATH = /opt/homebrew/opt/boost/lib
 }
 
 isEmpty(BOOST_INCLUDE_PATH) {
-    macx:BOOST_INCLUDE_PATH = /opt/local/include
+    macx:BOOST_INCLUDE_PATH = /opt/homebrew/opt/boost/include
 }
 
 win32:DEFINES += WIN32
@@ -465,7 +470,8 @@ LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(BDB_LIB_PATH,,-L,) $$join(OPENSSL_LIB
 LIBS += -lssl -lcrypto -ldb_cxx$$BDB_LIB_SUFFIX $$PWD/src/cryptopp/libcryptopp.a
 # -lgdi32 has to happen after -lcrypto (see  #681)
 win32:LIBS += -lws2_32 -lshlwapi -lmswsock -lole32 -loleaut32 -luuid -lgdi32
-LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
+# boost_system is header-only in modern Boost (1.69+)
+LIBS += -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
 win32:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX
 macx:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX
 

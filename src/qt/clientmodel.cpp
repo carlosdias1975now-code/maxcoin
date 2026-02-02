@@ -14,6 +14,8 @@
 #include <QDateTime>
 #include <QTimer>
 
+using namespace boost::placeholders;
+
 static const int64 nClientStartupTime = GetTime();
 
 ClientModel::ClientModel(OptionsModel *optionsModel, QObject *parent) :
