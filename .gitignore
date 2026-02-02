@@ -85,3 +85,6 @@ qa/pull-tester/build-tests.sh
 !src/leveldb*/Makefile
 
 .qmake.stash
+CLAUDE.md
+BUILD_ERRORS.md
+GIT_SETUP.md
