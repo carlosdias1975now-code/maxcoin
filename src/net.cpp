@@ -1094,8 +1094,9 @@ void ThreadMapPort()
     struct UPNPUrls urls;
     struct IGDdatas data;
     int r;
+    char wanaddr[64];
 
-    r = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr));
+    r = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr), wanaddr, sizeof(wanaddr));
     if (r == 1)
     {
         if (fDiscover) {
@@ -1260,7 +1261,7 @@ void DumpAddresses()
     CAddrDB adb;
     adb.Write(addrman);
 
-    printf("Flushed %d addresses to peers.dat  %"PRI64d"ms\n",
+    printf("Flushed %d addresses to peers.dat  %" PRI64d "ms\n",
            addrman.size(), GetTimeMillis() - nStart);
 }
 

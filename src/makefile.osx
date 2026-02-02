@@ -6,17 +6,18 @@
 # Mac OS X makefile for maxcoin
 # Originally by Laszlo Hanyecz (solar@heliacal.net)
 
-CXX=llvm-g++
+CXX=clang++
 #DEPSDIR=/opt/local
 DEPSDIR=
-BOOST_INCLUDE_PATH=/usr/local/opt/boost@1.60/include
-BOOST_LIB_PATH=/usr/local/opt/boost@1.60/lib
-OPENSSL_INCLUDE_PATH=/usr/local/opt/openssl/include
-OPENSSL_LIB_PATH=/usr/local/opt/openssl/lib
-BDB_INCLUDE_PATH = /opt/local/include/db48
-BDB_LIB_PATH = /opt/local/lib/db48
-MINIUPNPC_INCLUDE_PATH=/usr/local/opt/miniupnpc/include
-MINIUPNPC_LIB_PATH=/usr/local/opt/miniupnpc/lib
+# Apple Silicon Homebrew paths
+BOOST_INCLUDE_PATH=/opt/homebrew/opt/boost/include
+BOOST_LIB_PATH=/opt/homebrew/opt/boost/lib
+OPENSSL_INCLUDE_PATH=/opt/homebrew/opt/openssl@3/include
+OPENSSL_LIB_PATH=/opt/homebrew/opt/openssl@3/lib
+BDB_INCLUDE_PATH=/opt/homebrew/opt/berkeley-db@4/include
+BDB_LIB_PATH=/opt/homebrew/opt/berkeley-db@4/lib
+MINIUPNPC_INCLUDE_PATH=/opt/homebrew/opt/miniupnpc/include
+MINIUPNPC_LIB_PATH=/opt/homebrew/opt/miniupnpc/lib
 
 INCLUDEPATHS= \
  -I"$(CURDIR)" \
@@ -30,44 +31,28 @@ LIBPATHS= \
  -L"$(BOOST_LIB_PATH)" \
  -L"$(OPENSSL_LIB_PATH)"
 
-USE_UPNP:=0
+USE_UPNP:=-
 USE_IPV6:=1
-STATIC:=1
 
 LIBS= -dead_strip
 
 TESTDEFS = -DTEST_DATA_DIR=$(abspath test/data)
 
-ifdef STATIC
-# Build STATIC if you are redistributing the maxcoind binary
+# Use dynamic linking for Boost (Homebrew doesn't provide static libs by default)
+# Static libs for BDB, OpenSSL, and cryptopp which are available
 TESTLIBS += \
- $(DEPSDIR)/lib/libboost_unit_test_framework-mt.a
+ -lboost_unit_test_framework
 LIBS += \
- $(BDB_LIB_PATH)/libdb_cxx-4.8.a \
- $(BOOST_LIB_PATH)/libboost_system-mt.a \
- $(BOOST_LIB_PATH)/libboost_filesystem-mt.a \
- $(BOOST_LIB_PATH)/libboost_program_options-mt.a \
- $(BOOST_LIB_PATH)/libboost_thread-mt.a \
- $(BOOST_LIB_PATH)/libboost_chrono-mt.a \
+ $(BDB_LIB_PATH)/libdb_cxx.a \
+ -lboost_filesystem \
+ -lboost_program_options \
+ -lboost_thread \
+ -lboost_chrono \
  $(OPENSSL_LIB_PATH)/libssl.a \
  $(OPENSSL_LIB_PATH)/libcrypto.a \
- $(CURDIR)/cryptopp/libcryptopp.a \
- -lz
-else
-TESTLIBS += \
- -lboost_unit_test_framework-mt
-LIBS += \
- -ldb_cxx-4.8 \
- -lboost_system-mt \
- -lboost_filesystem-mt \
- -lboost_program_options-mt \
- -lboost_thread-mt \
- -lboost_chrono-mt \
- -lssl \
- -lcrypto \
+ "$(CURDIR)/cryptopp/libcryptopp.a" \
  -lz
 TESTDEFS += -DBOOST_TEST_DYN_LINK
-endif
 
 DEFS=-DMAC_OSX -DMSG_NOSIGNAL=0 -DBOOST_SPIRIT_THREADSAFE
 
@@ -75,14 +60,15 @@ ifdef RELEASE
 # Compile for maximum compatibility and smallest size.
 # This requires that dependencies are compiled
 # the same way.
-CFLAGS = -mmacosx-version-min=10.5 -arch i386 -O3
+CFLAGS = -mmacosx-version-min=11.0 -arch arm64 -O3
 else
 DEBUGFLAGS = -g
 endif
 
-# ppc doesn't work because we don't support big-endian
-CFLAGS += -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter \
-    $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
+# C++14 required for Crypto++ compatibility, ARM64 for Apple Silicon
+# -Wno-deprecated-declarations suppresses OpenSSL 3.0 deprecation warnings
+CFLAGS += -std=c++14 -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter \
+    -Wno-deprecated-declarations $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
 
 OBJS= \
     leveldb/libleveldb.a \
@@ -143,11 +129,11 @@ test check: test_maxcoin FORCE
 #
 # LevelDB support
 #
-LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
-DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
-DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
+LIBS += "$(CURDIR)/leveldb/libleveldb.a" "$(CURDIR)/leveldb/libmemenv.a"
+DEFS += -I"$(CURDIR)/leveldb/include"
+DEFS += -I"$(CURDIR)/leveldb/helpers"
 leveldb/libleveldb.a:
-	@echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(CFLAGS)" libleveldb.a libmemenv.a && cd ..
+	@echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="-std=c++14 -DNDEBUG -O2" libleveldb.a libmemenv.a && cd ..
 
 # auto-generated dependencies:
 -include obj/*.P
