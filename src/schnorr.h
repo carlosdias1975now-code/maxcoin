@@ -8,6 +8,11 @@
 #include <iostream>
 using namespace std;
 
+// Fix Windows BOOLEAN conflict with Crypto++
+#ifdef WIN32
+#undef BOOLEAN
+#endif
+
 #include "cryptopp/osrng.h"      // Random Number Generator
 #include "cryptopp/eccrypto.h"   // Elliptic Curve
 #include "cryptopp/ecp.h"        // F(p) EC
