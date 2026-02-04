@@ -9,48 +9,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-macos:
-    runs-on: macos-14  # Apple Silicon runner
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          brew install boost openssl@3 qt@5 miniupnpc
-
-      - name: Build Berkeley DB 4.8 from source
-        run: |
-          curl -LO https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz
-          tar -xzf db-4.8.30.NC.tar.gz
-          cd db-4.8.30.NC/build_unix
-          # Fix atomic conflicts with C++ standard library
-          sed -i '' 's/__atomic_compare_exchange/__atomic_compare_exchange_db/' ../dbinc/atomic.h || true
-          sed -i '' 's/atomic_init/atomic_init_db/g' ../dbinc/atomic.h || true
-          ../dist/configure --prefix=/usr/local/opt/berkeley-db@4 --enable-cxx --disable-shared --with-mutex=POSIX/pthreads/library
-          make -j$(sysctl -n hw.ncpu)
-          sudo make install
-
-      - name: Build daemon
-        run: |
-          cd src
-          make -f makefile.osx USE_UPNP=- BDB_INCLUDE_PATH=/usr/local/opt/berkeley-db@4/include BDB_LIB_PATH=/usr/local/opt/berkeley-db@4/lib -j$(sysctl -n hw.ncpu)
-
-      - name: Build Qt wallet
-        run: |
-          /opt/homebrew/opt/qt@5/bin/qmake "USE_UPNP=-" "BDB_INCLUDE_PATH=/usr/local/opt/berkeley-db@4/include" "BDB_LIB_PATH=/usr/local/opt/berkeley-db@4/lib" maxcoin-qt.pro
-          make -j$(sysctl -n hw.ncpu)
-
-      - name: Package macOS
-        run: |
-          mkdir -p release
-          cp src/maxcoind release/
-          zip -r release/MaxCoin-Qt-macOS-ARM64.zip MaxCoin-Qt.app
-
-      - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: maxcoin-macos-arm64
-          path: release/
+  # macOS builds disabled - use local compile scripts instead
+  # build-macos:
+  #   See maxcoin-wallet-compile.command and maxcoin-qt-wallet-compile.command
 
   build-linux:
     runs-on: ubuntu-22.04
@@ -67,8 +28,10 @@ jobs:
       - name: Build daemon
         run: |
           cd src
-          # Add boost_chrono to fix undefined reference to steady_clock::now()
-          make -f makefile.unix USE_UPNP=- LIBS+="-lboost_chrono" -j$(nproc)
+          # Build LevelDB first
+          cd leveldb && make libleveldb.a libmemenv.a && cd ..
+          # Add missing libraries
+          make -f makefile.unix USE_UPNP=- LDFLAGS="-L./leveldb" LIBS="-lboost_chrono -lssl -lcrypto -lleveldb -lmemenv" -j$(nproc)
 
       - name: Build Qt wallet
         run: |
@@ -115,7 +78,7 @@ jobs:
           path: release/
 
   release:
-    needs: [build-macos, build-linux, build-windows]
+    needs: [build-linux, build-windows]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
@@ -126,7 +89,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            maxcoin-macos-arm64/*
             maxcoin-linux-x64/*
             maxcoin-windows-x64/*
           draft: false
