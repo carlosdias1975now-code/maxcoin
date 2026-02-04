@@ -13,6 +13,10 @@
 #include "uint256.h"
 #include "hash.h"
 
+// Fix Windows BOOLEAN conflict with Crypto++ (must be after Windows headers)
+#ifdef WIN32
+#undef BOOLEAN
+#endif
 #include "schnorr.h"    // Integer Operations
 
 // secp160k1
