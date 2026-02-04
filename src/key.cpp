@@ -7,7 +7,14 @@
 #include "key.h"
 #include "schnorr.h"
 
-using namespace CryptoPP;
+// Avoid 'using namespace CryptoPP' as it brings BOOLEAN enum into
+// global scope, conflicting with Windows typedef BYTE BOOLEAN
+using CryptoPP::Integer;
+using CryptoPP::SHA3;
+using CryptoPP::ECP;
+using CryptoPP::AutoSeededRandomPool;
+using CryptoPP::byte;
+typedef CryptoPP::ECP::Point ECPPoint;
 
 Integer CKey::HashPointMessage(const ECPPoint& R,
     const byte* message, int mlen)
