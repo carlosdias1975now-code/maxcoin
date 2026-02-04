@@ -105,6 +105,10 @@ jobs:
             g++ -c $CXXFLAGS $INCLUDES -o obj/$src.o $src.cpp
           done
 
+          # Compile keccak.c (SHA-3 implementation) as C
+          echo "Compiling keccak.c..."
+          gcc -c -O2 -w -DWIN32 -I. -o obj/keccak.o keccak.c
+
           # Link with explicit Boost library paths
           # Note: boost_system is header-only since Boost 1.69, no library needed
           echo "Linking maxcoind.exe..."
