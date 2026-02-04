@@ -14,6 +14,10 @@
 #include <vector>
 #include <string>
 
+// Fix Windows BOOLEAN conflict with Crypto++ (must be after Windows headers)
+#ifdef WIN32
+#undef BOOLEAN
+#endif
 #include "schnorr.h"
 
 template<typename T1>
