@@ -1251,7 +1251,8 @@ void ThreadDNSAddressSeed()
 
 unsigned int pnSeed[] =
 {
-    0xb1f217c6, 0xe08e132e, 0xcea0e0d8
+    0x35392633,  // 51.38.57.53 - Active node (Feb 2026)
+    0xb1f217c6, 0xe08e132e, 0xcea0e0d8  // Legacy seeds
 };
 
 void DumpAddresses()
