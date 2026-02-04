@@ -92,7 +92,7 @@ jobs:
           USE_UPNP = -
           USE_IPV6 = 1
 
-          INCLUDEPATHS = -I"$(CURDIR)" -I"$(CURDIR)/leveldb/include" -I/mingw64/include -I/mingw64/include/db4
+          INCLUDEPATHS = -I"$(CURDIR)" -I"$(CURDIR)/leveldb/include" -I"$(CURDIR)/leveldb/helpers" -I/mingw64/include -I/mingw64/include/db4
           LIBPATHS = -L"$(CURDIR)/leveldb" -L"$(CURDIR)/cryptopp" -L/mingw64/lib
 
           LIBS = -lleveldb -lcryptopp -lmemenv \
