@@ -173,13 +173,30 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
 
+      - name: Package release files
+        run: |
+          echo "=== Downloaded artifacts ==="
+          find . -type f
+
+          # Create Windows zip
+          cd maxcoin-windows-x64
+          zip -r ../maxcoin-${{ github.ref_name }}-windows-x64.zip *.exe
+          cd ..
+
+          # Rename Linux tarball
+          mv maxcoin-linux-x64/maxcoin-linux-x64.tar.gz maxcoin-${{ github.ref_name }}-linux-x64.tar.gz
+
+          echo "=== Release files ==="
+          ls -la *.zip *.tar.gz
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            maxcoin-linux-x64/*
-            maxcoin-windows-x64/*
+            maxcoin-${{ github.ref_name }}-windows-x64.zip
+            maxcoin-${{ github.ref_name }}-linux-x64.tar.gz
           draft: false
           prerelease: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
