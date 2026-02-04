@@ -25,7 +25,7 @@ jobs:
           cd db-4.8.30.NC/build_unix
           # Fix for clang on modern macOS
           sed -i '' 's/__atomic_compare_exchange/__atomic_compare_exchange_db/' ../dbinc/atomic.h || true
-          ../dist/configure --prefix=/usr/local/opt/berkeley-db@4 --enable-cxx --disable-shared
+          ../dist/configure --prefix=/usr/local/opt/berkeley-db@4 --enable-cxx --disable-shared --with-mutex=POSIX/pthreads/library
           make -j$(sysctl -n hw.ncpu)
           sudo make install
 
