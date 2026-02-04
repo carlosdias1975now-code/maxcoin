@@ -28,12 +28,11 @@ jobs:
       - name: Build daemon
         run: |
           cd src
-          # Build LevelDB first
+          # Build dependencies first
           cd leveldb && make libleveldb.a libmemenv.a && cd ..
-          # Add ALL missing libraries
-          make -f makefile.unix USE_UPNP=- LDFLAGS="-L./leveldb" \
-            LIBS="-lboost_system -lboost_filesystem -lboost_program_options -lboost_thread -lboost_chrono \
-                  -lssl -lcrypto -ldb_cxx -lleveldb -lmemenv -lpthread" -j$(nproc)
+          cd cryptopp && make libcryptopp.a && cd ..
+          # Build with all libraries
+          make -f makefile.unix USE_UPNP=- -j$(nproc)
 
       - name: Build Qt wallet
         run: |
