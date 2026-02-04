@@ -78,32 +78,83 @@ jobs:
         shell: msys2 {0}
         run: |
           cd src
-          # Build LevelDB
+          # Build LevelDB for Windows
           cd leveldb
-          make libleveldb.a libmemenv.a || echo "LevelDB build attempted"
+          TARGET_OS=NATIVE_WINDOWS make libleveldb.a libmemenv.a || echo "LevelDB build attempted"
           cd ..
           # Build Crypto++ with byte fix
           cd cryptopp
-          make CXXFLAGS="-DCRYPTOPP_NO_GLOBAL_BYTE=1 -std=c++11" libcryptopp.a || echo "Cryptopp build attempted"
+          make CXXFLAGS="-DCRYPTOPP_NO_GLOBAL_BYTE=1 -std=c++14" libcryptopp.a || echo "Cryptopp build attempted"
           cd ..
-          # Build daemon
-          ls -la makefile.mingw
-          make -f makefile.mingw USE_UPNP=- CXXFLAGS="-DCRYPTOPP_NO_GLOBAL_BYTE=1" -j$(nproc) || echo "Daemon build attempted"
+          # Create MSYS2-compatible makefile
+          cat > makefile.msys2 << 'MAKEFILE'
+          CXX = g++
+          USE_UPNP = -
+          USE_IPV6 = 1
+
+          INCLUDEPATHS = -I"$(CURDIR)" -I/mingw64/include -I/mingw64/include/db4
+          LIBPATHS = -L"$(CURDIR)/leveldb" -L"$(CURDIR)/cryptopp" -L/mingw64/lib
+
+          LIBS = -lleveldb -lcryptopp -lmemenv \
+                 -lboost_system-mt -lboost_filesystem-mt -lboost_program_options-mt \
+                 -lboost_thread-mt -lboost_chrono-mt \
+                 -ldb_cxx -lssl -lcrypto \
+                 -lws2_32 -lmswsock -lshlwapi -ladvapi32 -lrpcrt4 -luuid \
+                 -lole32 -loleaut32 -lcomctl32 -lshell32 -lwinmm -lgdi32 \
+                 -lcomdlg32 -lwinspool -lkernel32 -luser32
+
+          DEFS = -D_MT -DWIN32 -D_WINDOWS -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DCRYPTOPP_NO_GLOBAL_BYTE=1
+          CXXFLAGS = -std=c++14 -O2 -w -Wall -Wextra -Wno-unused-parameter $(DEFS) $(INCLUDEPATHS)
+          LDFLAGS = -static-libgcc -static-libstdc++
+
+          OBJS = obj/alert.o obj/version.o obj/checkpoints.o obj/netbase.o obj/addrman.o \
+                 obj/crypter.o obj/key.o obj/db.o obj/init.o obj/keystore.o obj/main.o \
+                 obj/net.o obj/protocol.o obj/bitcoinrpc.o obj/rpcdump.o obj/rpcnet.o \
+                 obj/rpcmining.o obj/rpcwallet.o obj/rpcblockchain.o obj/rpcrawtransaction.o \
+                 obj/script.o obj/sync.o obj/util.o obj/wallet.o obj/walletdb.o obj/noui.o \
+                 obj/hash.o obj/bloom.o obj/leveldb.o obj/txdb.o
+
+          all: maxcoind.exe
+
+          obj/%.o: %.cpp
+          	@mkdir -p obj
+          	$(CXX) -c $(CXXFLAGS) -o $@ $<
+
+          maxcoind.exe: $(OBJS)
+          	$(CXX) $(LDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
+
+          clean:
+          	rm -rf obj maxcoind.exe
+          MAKEFILE
+          # Build with new makefile
+          make -f makefile.msys2 -j$(nproc)
 
       - name: Build Qt wallet
         shell: msys2 {0}
         run: |
-          # Use qmake-qt5 (the actual binary name on MSYS2)
-          /mingw64/bin/qmake-qt5.exe "USE_UPNP=-" maxcoin-qt.pro
-          make -j$(nproc) || echo "Qt build attempted"
+          # Configure and build Qt wallet for MSYS2
+          /mingw64/bin/qmake-qt5.exe \
+            "USE_UPNP=-" \
+            "QMAKE_CXXFLAGS+=-DCRYPTOPP_NO_GLOBAL_BYTE=1 -std=c++14" \
+            "INCLUDEPATH+=/mingw64/include /mingw64/include/db4" \
+            "LIBS+=-L/mingw64/lib -lboost_system-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_thread-mt -lboost_chrono-mt" \
+            maxcoin-qt.pro
+          make -j$(nproc)
 
       - name: Package Windows
         shell: msys2 {0}
         run: |
           mkdir -p release
-          cp src/maxcoind.exe release/ 2>/dev/null || echo "No daemon"
-          cp release/maxcoin-qt.exe release/ 2>/dev/null || echo "No Qt"
-          echo "Windows build" > release/BUILD_INFO.txt
+          echo "=== Looking for binaries ==="
+          find . -name "*.exe" -type f 2>/dev/null | head -20
+          # Copy daemon
+          cp src/maxcoind.exe release/ 2>/dev/null || echo "No daemon found"
+          # Copy Qt wallet (may be in different locations)
+          cp maxcoin-qt.exe release/ 2>/dev/null || \
+          cp release/maxcoin-qt.exe release/ 2>/dev/null || \
+          cp debug/maxcoin-qt.exe release/ 2>/dev/null || echo "No Qt found"
+          echo "=== Release contents ==="
+          ls -la release/
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
