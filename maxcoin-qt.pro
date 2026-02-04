@@ -406,7 +406,8 @@ OTHER_FILES += README.md \
 isEmpty(BOOST_LIB_SUFFIX) {
     # Modern Homebrew Boost doesn't use -mt suffix
     macx:BOOST_LIB_SUFFIX =
-    win32:BOOST_LIB_SUFFIX = -mgw44-mt-s-1_50
+    # MSYS2 uses -mt suffix (not -mgw44-mt-s-1_50)
+    win32:BOOST_LIB_SUFFIX = -mt
 }
 
 isEmpty(BOOST_THREAD_LIB_SUFFIX) {
