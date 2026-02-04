@@ -77,6 +77,11 @@ jobs:
       - name: Build daemon
         shell: msys2 {0}
         run: |
+          # Debug: List available Boost libraries
+          echo "=== Available Boost libraries ==="
+          ls -la /mingw64/lib/libboost_system* 2>/dev/null || echo "No boost_system found"
+          ls -la /mingw64/lib/libboost*.a 2>/dev/null | head -10
+
           cd src
           # Build LevelDB for Windows
           cd leveldb
