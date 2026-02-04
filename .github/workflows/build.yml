@@ -79,13 +79,13 @@ jobs:
         run: |
           cd src
           cd leveldb && make libleveldb.a libmemenv.a && cd ..
-          cd cryptopp && make libcryptopp.a && cd ..
-          make -f makefile.mingw USE_UPNP=- -j$(nproc) || echo "Daemon build attempted"
+          cd cryptopp && make CXXFLAGS="-DCRYPTOPP_NO_GLOBAL_BYTE=1" libcryptopp.a && cd ..
+          make -f makefile.mingw USE_UPNP=- CXXFLAGS="-DCRYPTOPP_NO_GLOBAL_BYTE=1" -j$(nproc) || echo "Daemon build attempted"
 
       - name: Build Qt wallet
         shell: msys2 {0}
         run: |
-          qmake "USE_UPNP=-" maxcoin-qt.pro
+          /mingw64/bin/qmake "USE_UPNP=-" maxcoin-qt.pro
           make -j$(nproc) || echo "Qt build attempted"
 
       - name: Package Windows
