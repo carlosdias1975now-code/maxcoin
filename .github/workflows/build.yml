@@ -96,8 +96,8 @@ jobs:
           LIBPATHS = -L"$(CURDIR)/leveldb" -L"$(CURDIR)/cryptopp" -L/mingw64/lib
 
           LIBS = -lleveldb -lcryptopp -lmemenv \
-                 -lboost_system-mt -lboost_filesystem-mt -lboost_program_options-mt \
-                 -lboost_thread-mt -lboost_chrono-mt \
+                 -lboost_system -lboost_filesystem -lboost_program_options \
+                 -lboost_thread -lboost_chrono \
                  -ldb_cxx -lssl -lcrypto \
                  -lws2_32 -lmswsock -lshlwapi -ladvapi32 -lrpcrt4 -luuid \
                  -lole32 -loleaut32 -lcomctl32 -lshell32 -lwinmm -lgdi32 \
