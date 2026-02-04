@@ -100,7 +100,7 @@ jobs:
           CXXFLAGS="-std=c++14 -O2 -w -D_MT -DWIN32 -D_WINDOWS -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DCRYPTOPP_NO_GLOBAL_BYTE=1"
           INCLUDES="-I. -Ileveldb/include -Ileveldb/helpers -I/mingw64/include -I/mingw64/include/db4"
 
-          for src in alert version checkpoints netbase addrman crypter key db init keystore main net protocol bitcoinrpc rpcdump rpcnet rpcmining rpcwallet rpcblockchain rpcrawtransaction script sync util wallet walletdb noui hash bloom leveldb txdb; do
+          for src in alert version checkpoints checkpointsync netbase addrman crypter key db init keystore main net protocol bitcoinrpc rpcdump rpcnet rpcmining rpcwallet rpcblockchain rpcrawtransaction script sync util wallet walletdb noui hash bloom leveldb txdb; do
             echo "Compiling $src.cpp..."
             g++ -c $CXXFLAGS $INCLUDES -o obj/$src.o $src.cpp
           done
