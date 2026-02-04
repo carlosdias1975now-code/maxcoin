@@ -30,8 +30,10 @@ jobs:
           cd src
           # Build LevelDB first
           cd leveldb && make libleveldb.a libmemenv.a && cd ..
-          # Add missing libraries
-          make -f makefile.unix USE_UPNP=- LDFLAGS="-L./leveldb" LIBS="-lboost_chrono -lssl -lcrypto -lleveldb -lmemenv" -j$(nproc)
+          # Add ALL missing libraries
+          make -f makefile.unix USE_UPNP=- LDFLAGS="-L./leveldb" \
+            LIBS="-lboost_system -lboost_filesystem -lboost_program_options -lboost_thread -lboost_chrono \
+                  -lssl -lcrypto -ldb_cxx -lleveldb -lmemenv -lpthread" -j$(nproc)
 
       - name: Build Qt wallet
         run: |
