@@ -130,13 +130,9 @@ jobs:
           /mingw64/bin/qmake-qt5.exe \
             "USE_UPNP=-" \
             "QMAKE_CXXFLAGS+=-DCRYPTOPP_NO_GLOBAL_BYTE=1 -std=c++14" \
-            "QMAKE_LFLAGS-=-Wl,--large-address-aware" \
             "INCLUDEPATH+=/mingw64/include /mingw64/include/db4" \
             "LIBS+=-L/mingw64/lib -lboost_filesystem-mt -lboost_program_options-mt -lboost_thread-mt -lboost_chrono-mt" \
             maxcoin-qt.pro
-          # Fix linker flags in generated Makefile (remove problematic options)
-          sed -i 's/--large-address-aware//g' Makefile.Release 2>/dev/null || true
-          sed -i 's/--large-address-aware//g' Makefile 2>/dev/null || true
           make -j$(nproc) || echo "Qt build attempted"
 
       - name: Package Windows
