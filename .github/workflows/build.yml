@@ -31,8 +31,8 @@ jobs:
           # Build dependencies first
           cd leveldb && make libleveldb.a libmemenv.a && cd ..
           cd cryptopp && make libcryptopp.a && cd ..
-          # Build - add boost_chrono which makefile.unix doesn't include
-          sed -i 's/-lboost_thread/-lboost_thread -lboost_chrono/' makefile.unix
+          # Add boost_chrono to makefile.unix LIBS line
+          echo 'LIBS += -lboost_chrono' >> makefile.unix
           make -f makefile.unix USE_UPNP=- -j$(nproc)
 
       - name: Build Qt wallet
