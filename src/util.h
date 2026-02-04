@@ -14,7 +14,12 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #else
-typedef int pid_t; /* define for Windows compatibility */
+// MSYS2/MinGW provides pid_t via sys/types.h, only define for MSVC
+#ifdef __MINGW32__
+#include <sys/types.h>
+#else
+typedef int pid_t; /* define for Windows compatibility (MSVC) */
+#endif
 #endif
 #include <map>
 #include <list>
