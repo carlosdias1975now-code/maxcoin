@@ -106,10 +106,10 @@ jobs:
           INCLUDEPATHS = -I"$(CURDIR)" -I"$(CURDIR)/leveldb/include" -I"$(CURDIR)/leveldb/helpers" -I/mingw64/include -I/mingw64/include/db4
           LIBPATHS = -L"$(CURDIR)/leveldb" -L"$(CURDIR)/cryptopp" -L/mingw64/lib
 
-          # Note: MSYS2 boost libraries use -mt suffix for DLL import libs
+          # Link against MSYS2 Boost DLL import libraries
           LIBS = -lleveldb -lcryptopp -lmemenv \
-                 -l:libboost_system-mt.dll.a -l:libboost_filesystem-mt.dll.a -l:libboost_program_options-mt.dll.a \
-                 -l:libboost_thread-mt.dll.a -l:libboost_chrono-mt.dll.a \
+                 /mingw64/lib/libboost_system-mt.dll.a /mingw64/lib/libboost_filesystem-mt.dll.a /mingw64/lib/libboost_program_options-mt.dll.a \
+                 /mingw64/lib/libboost_thread-mt.dll.a /mingw64/lib/libboost_chrono-mt.dll.a \
                  -ldb_cxx -lssl -lcrypto \
                  -lws2_32 -lmswsock -lshlwapi -ladvapi32 -lrpcrt4 -luuid \
                  -lole32 -loleaut32 -lcomctl32 -lshell32 -lwinmm -lgdi32 \
