@@ -13,8 +13,9 @@ using CryptoPP::Integer;
 using CryptoPP::SHA3;
 using CryptoPP::ECP;
 using CryptoPP::AutoSeededRandomPool;
-using CryptoPP::byte;
 typedef CryptoPP::ECP::Point ECPPoint;
+// byte type - use unsigned char since CRYPTOPP_NO_GLOBAL_BYTE is defined
+typedef unsigned char byte;
 
 Integer CKey::HashPointMessage(const ECPPoint& R,
     const byte* message, int mlen)
