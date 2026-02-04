@@ -103,7 +103,7 @@ jobs:
                  -lole32 -loleaut32 -lcomctl32 -lshell32 -lwinmm -lgdi32 \
                  -lcomdlg32 -lwinspool -lkernel32 -luser32
 
-          DEFS = -D_MT -DWIN32 -D_WINDOWS -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DCRYPTOPP_NO_GLOBAL_BYTE=1
+          DEFS = -D_MT -DWIN32 -D_WINDOWS -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DCRYPTOPP_NO_GLOBAL_BYTE=1
           CXXFLAGS = -std=c++14 -O2 -w -Wall -Wextra -Wno-unused-parameter $(DEFS) $(INCLUDEPATHS)
           LDFLAGS = -static-libgcc -static-libstdc++
 
