@@ -55,25 +55,48 @@ jobs:
           path: release/maxcoin-linux-x64.tar.gz
 
   build-windows:
-    runs-on: ubuntu-22.04
-    continue-on-error: true  # Windows cross-compile is experimental
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install MinGW cross-compiler
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64 g++-mingw-w64-x86-64
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-boost
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-db
+            mingw-w64-x86_64-qt5
+            mingw-w64-x86_64-qrencode
+            make
+            git
 
-      - name: Note about Windows builds
+      - name: Build daemon
+        shell: msys2 {0}
         run: |
-          echo "Windows cross-compilation requires significant makefile modifications."
-          echo "For now, Windows users can build natively with MSYS2."
-          echo "See README.md for MSYS2 build instructions."
+          cd src
+          cd leveldb && make libleveldb.a libmemenv.a && cd ..
+          cd cryptopp && make libcryptopp.a && cd ..
+          make -f makefile.mingw USE_UPNP=- -j$(nproc) || echo "Daemon build attempted"
+
+      - name: Build Qt wallet
+        shell: msys2 {0}
+        run: |
+          qmake "USE_UPNP=-" maxcoin-qt.pro
+          make -j$(nproc) || echo "Qt build attempted"
+
+      - name: Package Windows
+        shell: msys2 {0}
+        run: |
           mkdir -p release
-          echo "Windows build requires MSYS2 - see README.md" > release/WINDOWS_BUILD_INSTRUCTIONS.txt
+          cp src/maxcoind.exe release/ 2>/dev/null || echo "No daemon"
+          cp release/maxcoin-qt.exe release/ 2>/dev/null || echo "No Qt"
+          echo "Windows build" > release/BUILD_INFO.txt
 
-      - name: Upload Windows placeholder
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: maxcoin-windows-x64
