@@ -77,16 +77,13 @@ jobs:
       - name: Build daemon
         shell: msys2 {0}
         run: |
-          # Debug: List available Boost libraries
+          # Debug: List available Boost libraries we need
           echo "=== Available Boost libraries ==="
-          ls -la /mingw64/lib/libboost_system* 2>/dev/null || echo "No boost_system found"
-          ls -la /mingw64/lib/libboost*.a 2>/dev/null | head -20
-          echo "=== Boost DLL imports ==="
-          ls -la /mingw64/lib/libboost*.dll.a 2>/dev/null | head -10
-
-          # Extract actual library suffix from installed files
-          BOOST_LIB=$(ls /mingw64/lib/libboost_system*.a 2>/dev/null | head -1 | sed 's/.*libboost_system//' | sed 's/\.a$//')
-          echo "Detected Boost suffix: '$BOOST_LIB'"
+          ls -la /mingw64/lib/libboost_system* 2>/dev/null || echo "boost_system: header-only (not needed)"
+          ls -la /mingw64/lib/libboost_filesystem* 2>/dev/null || echo "boost_filesystem: NOT FOUND"
+          ls -la /mingw64/lib/libboost_program_options* 2>/dev/null || echo "boost_program_options: NOT FOUND"
+          ls -la /mingw64/lib/libboost_thread* 2>/dev/null || echo "boost_thread: NOT FOUND"
+          ls -la /mingw64/lib/libboost_chrono* 2>/dev/null || echo "boost_chrono: NOT FOUND"
 
           cd src
           # Build LevelDB for Windows
@@ -109,16 +106,14 @@ jobs:
           done
 
           # Link with explicit Boost library paths
+          # Note: boost_system is header-only since Boost 1.69, no library needed
           echo "Linking maxcoind.exe..."
           g++ -static-libgcc -static-libstdc++ -o maxcoind.exe \
             obj/*.o \
             -Lleveldb -Lcryptopp -L/mingw64/lib \
             -lleveldb -lcryptopp -lmemenv \
-            /mingw64/lib/libboost_system-mt.dll.a \
-            /mingw64/lib/libboost_filesystem-mt.dll.a \
-            /mingw64/lib/libboost_program_options-mt.dll.a \
-            /mingw64/lib/libboost_thread-mt.dll.a \
-            /mingw64/lib/libboost_chrono-mt.dll.a \
+            -lboost_filesystem-mt -lboost_program_options-mt \
+            -lboost_thread-mt -lboost_chrono-mt \
             -ldb_cxx -lssl -lcrypto \
             -lws2_32 -lmswsock -lshlwapi -ladvapi32 -lrpcrt4 -luuid \
             -lole32 -loleaut32 -lcomctl32 -lshell32 -lwinmm -lgdi32 \
