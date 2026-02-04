@@ -1812,7 +1812,7 @@ public:
 
 struct CBlockIndexWorkComparator
 {
-    bool operator()(CBlockIndex *pa, CBlockIndex *pb) {
+    bool operator()(CBlockIndex *pa, CBlockIndex *pb) const {
         if (pa->nChainWork > pb->nChainWork) return false;
         if (pa->nChainWork < pb->nChainWork) return true;
 
