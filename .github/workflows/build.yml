@@ -23,8 +23,9 @@ jobs:
           curl -LO https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz
           tar -xzf db-4.8.30.NC.tar.gz
           cd db-4.8.30.NC/build_unix
-          # Fix for clang on modern macOS
+          # Fix atomic conflicts with C++ standard library
           sed -i '' 's/__atomic_compare_exchange/__atomic_compare_exchange_db/' ../dbinc/atomic.h || true
+          sed -i '' 's/atomic_init/atomic_init_db/g' ../dbinc/atomic.h || true
           ../dist/configure --prefix=/usr/local/opt/berkeley-db@4 --enable-cxx --disable-shared --with-mutex=POSIX/pthreads/library
           make -j$(sysctl -n hw.ncpu)
           sudo make install
@@ -66,11 +67,12 @@ jobs:
       - name: Build daemon
         run: |
           cd src
-          make -f makefile.unix USE_UPNP=- -j$(nproc)
+          # Add boost_chrono to fix undefined reference to steady_clock::now()
+          make -f makefile.unix USE_UPNP=- LIBS+="-lboost_chrono" -j$(nproc)
 
       - name: Build Qt wallet
         run: |
-          qmake "USE_UPNP=-" maxcoin-qt.pro
+          qmake "USE_UPNP=-" "LIBS+=-lboost_chrono" maxcoin-qt.pro
           make -j$(nproc)
 
       - name: Package Linux
