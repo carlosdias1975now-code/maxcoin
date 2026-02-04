@@ -93,18 +93,9 @@ jobs:
       - name: Build Qt wallet
         shell: msys2 {0}
         run: |
-          which qmake || echo "qmake not in path"
-          ls -la /mingw64/bin/qmake* 2>/dev/null || echo "No qmake in /mingw64/bin"
-          ls -la /mingw64/qt5/bin/qmake* 2>/dev/null || echo "No qmake in /mingw64/qt5/bin"
-          # Try to find qmake
-          find /mingw64 -name "qmake*" 2>/dev/null | head -5 || echo "qmake not found"
-          # Use qmake if found
-          if command -v qmake &> /dev/null; then
-            qmake "USE_UPNP=-" maxcoin-qt.pro
-            make -j$(nproc) || echo "Qt build attempted"
-          else
-            echo "qmake not available, skipping Qt build"
-          fi
+          # Use qmake-qt5 (the actual binary name on MSYS2)
+          /mingw64/bin/qmake-qt5.exe "USE_UPNP=-" maxcoin-qt.pro
+          make -j$(nproc) || echo "Qt build attempted"
 
       - name: Package Windows
         shell: msys2 {0}
