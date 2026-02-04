@@ -1196,9 +1196,8 @@ void MapPort(bool)
 // The first name is used as information source for addrman.
 // The second name should resolve to a list of seed addresses.
 static const char *strMainNetDNSSeed[][3] = {
-    {"Seed A", "a.seed.maxcoinproject.net"},
-    {"Seed B", "b.seed.maxcoinproject.net"},
-    {"Dynamic Seed", "maxcoin.jumpingcrab.com"},
+    // TODO: Add working DNS seeds when available
+    // {"Seed A", "seed.yourdomain.com"},
     {NULL, NULL}
 };
 
@@ -1252,7 +1251,7 @@ void ThreadDNSAddressSeed()
 unsigned int pnSeed[] =
 {
     0x35392633,  // 51.38.57.53 - Active node (Feb 2026)
-    0xb1f217c6, 0xe08e132e, 0xcea0e0d8  // Legacy seeds
+    // Add more active nodes here as they become available
 };
 
 void DumpAddresses()
